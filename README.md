@@ -2,11 +2,14 @@
 
 一系列面向 coding agent 的 Agent Skills（遵循 [agentskills.io](https://agentskills.io) 规范）。**`skills/` 下每个目录 = 一个独立技能**，可单独安装，也可作为插件整体分发。本仓库会持续收录更多技能。
 
+> **中英双版**：每个技能都提供全中文（`<name>`）与全英文（`<name>-en`）两个版本，共用存储、结构一致，国内/国外用户各取所需。
+
 ## 目录
 
 | 技能 | 功能 |
 |------|------|
-| [wdp-ctx](skills/wdp-ctx/SKILL.md) | 跨会话/跨 agent 的项目上下文：随时保存、随时接续、随时切换（sum/init/profile/verify/export/list/clear 七个子命令） |
+| [wdp-ctx](skills/wdp-ctx/SKILL.md) | 跨会话/跨 agent 的项目上下文：随时保存、随时接续、随时切换（sum/init/profile/verify/export/list/clear 七个子命令）。中文版 |
+| [wdp-ctx-en](skills/wdp-ctx-en/SKILL.md) | Same as wdp-ctx — the English variant (shared storage, switch language without losing context) |
 
 ---
 
@@ -45,16 +48,16 @@
 
 ### 安装（Claude Code）
 
-把 `skills/wdp-ctx` 目录复制到 `~/.claude/skills/`：
+把 `skills/wdp-ctx` 与 `skills/wdp-ctx-en` 复制到 `~/.claude/skills/`（两版共用存储，装任意一版即可，也可都装）：
 
 ```bash
 mkdir -p ~/.claude/skills
-cp -r skills/wdp-ctx ~/.claude/skills/
+cp -r skills/wdp-ctx skills/wdp-ctx-en ~/.claude/skills/
 ```
 
-安装后重启 Claude Code（或稍等热加载），即可在任何项目使用 `/wdp-ctx`。
+安装后重启 Claude Code（或稍等热加载），即可在任何项目使用 `/wdp-ctx`（中文版）或 `/wdp-ctx-en`（英文版）。
 
-> 用户级安装对**所有项目生效**。若只想在单个项目内生效，把 `skills/wdp-ctx` 复制到该项目的 `.claude/skills/` 即可。
+> 用户级安装对**所有项目生效**。若只想在单个项目内生效，把对应目录复制到该项目的 `.claude/skills/` 即可。
 
 ### 使用流程
 
@@ -93,17 +96,20 @@ cp -r skills/wdp-ctx ~/.claude/skills/
 
 ## 新增技能
 
-每个技能一个目录，平铺在 `skills/` 下（**不要嵌套**——Claude Code 不发现嵌套技能目录）：
+每个技能**中英双版**，平铺在 `skills/` 下（**不要嵌套**——Claude Code 不发现嵌套技能目录）：
 
 ```
-skills/<技能名>/
-├── SKILL.md            # 必须：frontmatter name/description + 正文
-└── summaries/          # 可选：技能自有存储（wdp-ctx 用）
+skills/<技能名>/             # 全中文（命令 /<技能名>）
+├── SKILL.md
+└── summaries/             # 可选：技能自有存储（如 wdp-ctx 的共享存储根）
+skills/<技能名>-en/         # 全英文（命令 /<技能名>-en）
+└── SKILL.md
 ```
 
 SKILL.md 要求：
 - frontmatter `name` 与目录名一致、`description` 以 "Use when" 开头只写触发条件、`disable-model-invocation: true`
 - 纯 Markdown 优先，无运行时代码；需脚本时放同目录并给出用法
+- 中英两版命令/子命令/模板结构完全一致，只差语言；若共用存储，双方 SKILL.md 存储节互注说明
 
 新增后更新本 README 目录表与 `.claude-plugin/plugin.json` 描述。
 
