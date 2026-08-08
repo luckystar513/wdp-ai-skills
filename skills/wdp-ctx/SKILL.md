@@ -1,0 +1,257 @@
+---
+name: wdp-ctx
+description: Use when the user runs /wdp-ctx to save, load, verify, export, or clear the project's context so it survives session reset and can be resumed by any coding agent. Subcommands: sum, init, profile, verify, export, list, clear
+disable-model-invocation: true
+---
+
+# /wdp-ctx — 项目上下文：随时保存 · 随时接续 · 随时切换
+
+把当前项目的**上下文**固化成文档，让任何 coding agent 在重启、清空、压缩上下文或切换 agent/项目后，一条命令重新载入。**核心价值 = 随时可读、可切换的上下文**：
+
+- **稳定信息**（技术栈/架构/规则/运行方式）→ 归档案 `profile.md`，`profile` 子命令维护；
+- **易变信息**（当前焦点/完成/进行中/下一步/非显然知识）→ 归快照，`sum` 子命令追加。
+
+**核心原则：稳定信息归档案，易变信息归快照。** 快照通过 frontmatter 的 `profile:` 引用档案，不重复粘贴技术栈。
+
+## 用法总览
+
+```
+/wdp-ctx <子命令> [参数]
+```
+
+| 子命令 | 功能 | 参数 |
+|--------|------|------|
+| `sum` | 保存当前工作状态为快照（增量对比上次；`--deep` 深度分析） | `<项目路径>` `--deep` |
+| `init` | 载入档案 + 最新快照，接续上次工作 | `<项目路径>` |
+| `profile` | 创建/更新项目稳定档案 | `<项目路径>` |
+| `verify` | 校验快照与代码的漂移，判断可信度（只读） | `<项目路径>` |
+| `export` | 导出 AGENTS.md 给不认本命令的其他 agent | `<项目路径>` |
+| `list` | 列出所有档案与快照（新到旧） | — |
+| `clear` | 清空快照（默认保留档案；`--keep N` 保留最近 N 份） | `<项目路径>` `--keep N` `--profile` |
+
+**无子命令直接运行** → 默认执行 `list` 并展示本用法。
+
+## 存储模型
+
+```
+<存储根>/<项目slug>/
+├── profile.md              # 稳定层（profile 子命令维护）
+├── <YYYY-MM-DD_HHMMSS>.md  # 快照层（sum 子命令追加）
+└── latest.md               # 指向最新快照（init/verify 读它）
+```
+
+## 存储根目录（所有子命令共用）
+
+本技能目录下的 `summaries/` 子目录：
+
+1. 项目级安装：`<项目路径>/.claude/skills/wdp-ctx/summaries/`
+2. 用户级安装：`~/.claude/skills/wdp-ctx/summaries/`
+
+优先用项目级的（用 bash 判断哪个存在），不存在则创建。按**项目 slug** 分子目录、文件名含时间戳，多项目互不混淆。
+
+---
+
+## sum — 保存工作快照
+
+1. **确定项目**：无参数 = 当前目录（`pwd`）；`sum <项目路径>` 用给定路径。
+2. **读取上一份快照**（增量基础）：`latest.md` 指向的优先，否则按时间戳取最新。
+3. **收集信息**（只读探索，不改项目文件）：
+   - git 状态（在仓库时）：`git status --short`、`git log --oneline -10`、`git diff --stat`。
+   - **增量对比（核心）**：逐条核对上一份快照的"进行中/下一步/当前焦点"，每条标 ✅已完成 / 🔄仍进行中 / ⛔已放弃 / 🔀变更方向；仍进行中的写清新进展，用 git diff 佐证；**与上次完全一样则标"（较上次无变化）"，不要臆造进展**。
+   - 本会话 TaskList、本次会话的非显然知识（踩过的坑、反直觉结论）。
+4. **生成快照文档**（模板见下）；frontmatter 必填 `prev` / `created` / `profile`。
+5. **更新 `latest.md`** 为最新快照文件名。
+6. **报告**：保存路径、一句话概述；若档案缺失提醒先 `profile`。
+
+**`--deep` 深度模式**（显式 opt-in，更耗 token）：划分 2-5 个子系统 → 并行派生子 agent 逐系统只读分析（当前状态、与快照出入、非显然问题）→ 可选一个全局 agent 扫跨切面（TODO/FIXME、git log）→ 综合成更全的快照，`tags: [deep]`。派生前先确认用户愿意等。
+
+### 快照模板
+
+```markdown
+---
+type: snapshot
+project: <项目slug>
+created: <YYYY-MM-DDTHH:MM:SS>
+author: <agent名>
+commit: <git hash 或 ~>
+prev: <上一份快照文件名 或 ~>
+profile: <profile.md 或 ~>
+tags: []
+---
+
+# 工作快照 · <项目名>
+
+## 当前焦点
+<一句话：为什么现在在做这件事>
+
+## 自上次以来完成（Done since last）
+- ✅ <要点>
+
+## 进行中（In progress）
+- 🔄 <要点，含阻塞/风险>（新增进展：…；或标注"较上次无变化"）
+
+## 变更方向 / 放弃（Changed / Dropped）
+- ⛔ <原计划事项> → 放弃/变更原因
+
+## 下一步（Next 3-5）
+- <按价值排序>
+
+## 本次会话的非显然知识（Non-obvious learnings）
+- <踩过的坑、反直觉结论、推翻的假设>
+
+## 关键决策与理由（Decisions & why）
+- <What + Why，防重蹈覆辙>
+```
+
+---
+
+## init — 载入上下文
+
+1. **确定项目**：无参数 = `pwd`；有参数 = 给定路径。
+2. **读档案**：读 `<slug>/profile.md`；不存在则报告"尚无档案，建议 `/wdp-ctx profile`"，继续读快照；存在则完整 Read，复述：一句话定位、技术栈、架构、**不可违背的规则**、运行方式、已知坑。
+3. **读最新快照**：`latest.md` 指向的，否则按时间戳取最新（排除 profile/latest.md）；完整 Read，复述：当前焦点、完成、进行中、下一步、非显然知识、决策。目标项目目录为空则回退其他项目的最新快照并**明确告知**。
+4. **载入完成**：说明路径+时间；据"进行中/下一步"给 2-3 个建议切入点，询问继续哪项。
+
+---
+
+## profile — 维护稳定档案
+
+1. **确定项目**：无参数 = `pwd`；有参数 = 给定路径。
+2. **收集稳定信息**（只读）：
+   - 技术栈：清单文件（package.json / requirements.txt / pyproject.toml / go.mod / Cargo.toml）+ 配置（vite/tsconfig/.env.example/docker-compose）。
+   - 架构：目录结构、模块边界、入口、数据流。
+   - 业务：README、项目用途、命名。
+   - 运行方式：package.json scripts、Makefile、README 的 build/test/run/部署。
+   - 规则/不变量：CLAUDE.md / AGENTS.md / CONTRIBUTING.md / .editorconfig / 代码注释 → 提取**必须遵守、不可违背**的规则（单独成节，与临时注意事项严格区分）。
+   - 决策记录、已知坑、外部依赖（只记凭据位置，不记密钥）。
+3. **生成或更新**：首次按模板；已存在则逐节对比只更新变化节。frontmatter `updated` 更新。
+4. **报告**：路径、新增/更新了哪些节、**明确列出"不可违背的规则"请用户确认**。
+
+### 档案模板
+
+```markdown
+---
+type: profile
+project: <项目slug>
+updated: <YYYY-MM-DDTHH:MM:SS>
+---
+
+# 项目档案 · <项目名>
+
+## 一句话定位
+## 技术栈
+## 架构概览
+## 业务领域
+## 不可违背的规则（Invariants）
+- <必须遵守，禁止违反>
+## 运行方式
+- 构建/测试/运行/部署
+## 外部依赖
+- <服务/API/凭据位置>
+## 决策记录（Decisions & why）
+## 已知坑（Known gotchas）
+- <坑 + 规避方法>
+```
+
+---
+
+## verify — 校验快照漂移（只读）
+
+1. 确定项目；读最新快照（无则报告"尚无快照，先 sum"并结束），解析 frontmatter（created/commit）。
+2. **采集当前状态**：git（status/branch/log/diff，不在仓库则跳过）；快照与档案提到的关键路径逐一检查存在性；"进行中/下一步"条目对照代码判定。
+3. **逐项判定**：
+
+   | 类别 | 含义 |
+   |------|------|
+   | ✅ 仍成立 | 与当前一致，无需处理 |
+   | 🔄 有进展未记录 | git 有新改动快照未反映 → 建议 sum |
+   | ⚠️ 已失效 | 提到的文件/模块/下一步已不存在或已完成 → 需 sum 修订 |
+   | ❌ 冲突 | 快照与代码矛盾 → 立即刷新，别按旧快照接续 |
+
+   - commit 与当前 HEAD 不一致要提示；档案层有明显变化标"需 profile 刷新"。
+4. **报告**：快照时间 vs 当前、commit 对比、漂移表、**陈旧度结论**（新鲜 / 略陈旧 / 严重过期）、建议动作（sum 或 profile）。
+
+---
+
+## export — 导出 AGENTS.md
+
+把档案 + 最新快照合成 `AGENTS.md` 写入项目根目录，让**不认本命令的其他 agent** 启动即读。任一层缺失则用现有部分并标注"该节尚未维护"。
+
+**合并策略（绝不丢用户内容）**：
+- 目标不存在 → 创建，全文为 wdp 生成；
+- 已有且含 `<!-- wdp-export-begin -->` / `<!-- wdp-export-end -->` → 仅替换标记之间；
+- 已有且无标记 → 文件末尾追加一段标记包裹的维护区，不碰已有内容。
+
+**模板**（紧凑，AGENTS.md 宜短）：
+
+```markdown
+<!-- wdp-export-begin -->
+# Project Context (auto-generated by wdp /wdp-ctx export)
+
+## What / Quick summary
+## Tech stack
+## Architecture (top-level)
+## Invariants (must not break)
+## How to run
+## Current work state (as of <快照时间>)
+- 当前焦点 / 进行中 / 下一步(前3) / 最近完成
+## Known gotchas / Decisions
+<!-- wdp-export-end -->
+```
+
+不写密钥（只可写凭据位置）、不写完整快照历史。报告：路径、新建/替换/追加、哪些节缺失。
+
+---
+
+## list — 列出所有文档
+
+1. 枚举 `<存储根>/**/*.md`，排除 latest.md（指针文件）。空则报告"暂无文档"，提示 `sum` / `profile`。
+2. 分两部分展示：
+   - **A. 项目档案（profile）**：项目 / 更新时间 / 路径
+   - **B. 工作快照（snapshot，新到旧）**：生成时间 / 项目 / 要点(标题) / 路径
+   - 快照按文件名时间戳从大到小（字典序即时间序）；frontmatter 的 `created` 和标题作要点列；末尾统计：共 N 份快照、M 份档案、分属 K 个项目。
+3. 进一步动作：想看内容 → `init <项目路径>`；更新档案 → `profile <项目路径>`。
+
+---
+
+## clear — 清空文档
+
+**不可逆破坏性操作，删除前必须二次确认。**
+
+**默认行为**：快照（`<时间戳>.md`）是默认删除对象；profile.md **默认保留**；删快照后 latest.md 一并处理；`--keep N` 每项目保留最新 N 份。
+
+1. **明确范围**：全部快照（默认）/ 全部+档案（显式）/ 仅某项目（`clear <项目路径>`）/ 仅档案（`clear --profile`）/ 保留最近 N（`clear --keep N`，可叠加项目路径）。
+2. **计算删除清单**：按项目分组、按文件名时间戳**从新到旧**排序，前 N 份划"保留"，其余划"删除"；展示删除清单 + 保留清单。
+3. **二次确认（必须）**："确认删除这 N 份文档（保留 M 份）？此操作不可恢复。" 拒绝则报告"已取消，未删除任何文件"。
+4. **删除**：只删清单内文件；删后若 latest.md 悬空，改指保留清单最新一份；无保留则删 latest.md。报告删了 N 保留 M。
+
+---
+
+## 自动提醒约定（把 wdp 从手动工具变成自动记忆）
+
+在本会话**任何时候**，若发生以下情况，主动提醒用户保存/载入上下文：
+
+- 会话上下文即将被**压缩 / 清空**（/clear、上下文过长）→ 建议 `/wdp-ctx sum`
+- 完成了**里程碑 / 重大改动** → 建议 `/wdp-ctx sum`
+- 即将**切换 agent / 关闭会话 / 交接他人** → 建议 `/wdp-ctx sum`
+- 会话开始接续后（init 执行过）同样遵守以上约定
+
+一句话提醒即可，例："已完成 X，建议运行 `/wdp-ctx sum` 保存快照，下次 `/wdp-ctx init` 即可接续。"
+
+## 常见错误
+
+| 错误 | 修正 |
+|------|------|
+| 把技术栈/业务写进快照 | 稳定信息归档案（profile），快照只写状态变化 |
+| 覆盖上一份快照 | 文件名带时间戳追加，永不覆盖 |
+| 忽略 git diff / 上份快照 | 增量对比是快照的价值来源 |
+| frontmatter 缺 `prev`/`created` | 缺了无法增量接续 |
+| init 只读快照不读档案 | 两层都要读，规则/技术栈在档案里 |
+| 把 profile/latest.md 当快照排序 | 分开展示，latest.md 排除 |
+| clear 不确认直接删 | 破坏性操作必须先列清单再二次确认 |
+| clear 误删 profile | 默认保留档案，除非显式要求 |
+| clear `--keep N` 方向反 | 从新到旧保留前 N，删旧的 |
+| verify 时改文件 | verify 是只读校验 |
+| export 覆盖已有 AGENTS.md | 有标记只替换维护区，无标记追加 |
+| 普通模式误派子 agent | `--deep` 是显式 opt-in |
+| 只记位置不记密钥 | 任何子命令都不得写入密钥内容 |

@@ -1,6 +1,6 @@
 {
-  "name": "wdp-sum",
-  "description": "跨会话/跨 agent 的项目上下文保留：/wdp-sum 快照、/wdp-init 接续、/wdp-profile 档案、/wdp-verify 校验、/wdp-export 导出 AGENTS.md、/wdp-list 列出、/wdp-clear 清空",
+  "name": "wdp-ai-skills",
+  "description": "Coding Agent 技能集合仓库：跨会话/跨 agent 项目上下文保留（/wdp-ctx：sum 快照、init 接续、profile 档案、verify 校验、export 导出 AGENTS.md、list 列出、clear 清空），后续持续收录更多技能",
   "author": {
     "name": "wdp"
   }
