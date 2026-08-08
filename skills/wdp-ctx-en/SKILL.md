@@ -13,6 +13,21 @@ This is the **English variant** of the `/wdp-ctx` skill. It turns the current pr
 
 **Core principle: stable info goes to the profile, volatile info goes to snapshots.** Snapshots reference the profile via `profile:` in frontmatter instead of duplicating the tech stack.
 
+## Non-negotiable rules (ironclad)
+
+While executing any subcommand of this skill, violating **any** of the following counts as a failed execution — no workarounds:
+
+1. **Never fabricate progress**: during the incremental diff, if an item is unchanged since last time, write "(no change since last)" explicitly — never invent or assume progress; back every claim of progress with git diff.
+2. **Never overwrite snapshots**: snapshot filenames must carry timestamps and always append; `latest.md` is a pointer only, never content.
+3. **Stable/volatile layering**: tech stack, architecture, domain, and rules go in the profile only; snapshots record state changes and never duplicate the tech stack.
+4. **Destructive-operation rule**: `clear` must list the delete list and get a second confirmation before deleting; profile.md is kept by default unless the user explicitly asks to delete it too.
+5. **verify is read-only**: never modify any project file during verification — read-only exploration + report.
+6. **export never loses user content**: if the target AGENTS.md exists, with markers replace only the maintenance section between the markers; without markers, only append — never overwrite existing user content.
+7. **Locations, not secrets**: no subcommand or generated document may write secrets/tokens/passwords; at most note "where the credentials live".
+8. **`--deep` is explicit opt-in**: no sub-agents in normal mode; only when the user explicitly asks for `--deep`, and confirm they're willing to wait before dispatching.
+9. **init must read both layers**: profile + latest snapshot are both required; if a layer is missing, say "this layer not maintained yet" — never treat reading one layer as a complete resume.
+10. **Language is just a shell**: the Chinese (wdp-ctx) and English (wdp-ctx-en) variants share the same storage and identical execution logic; switching language never changes the storage rules.
+
 ## Usage
 
 ```
