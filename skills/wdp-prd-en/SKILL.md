@@ -1,6 +1,7 @@
 ---
 name: wdp-prd-en
-description: Requirements-management backlog (built on superpowers). Continuously brainstorm requirements and store them as cards, compute scheduling state from dependencies/conflicts, then dispatch confirmed requirements to background subagents for parallel implementation.
+description: Use when the user runs /wdp-prd-en to discuss/record new requirements, view the backlog, or dispatch confirmed requirements to background subagents for parallel implementation. English variant of wdp-prd-zh. Subcommands: new, list, update, confirm, dispatch, accept
+disable-model-invocation: true
 ---
 
 # wdp-prd-en — Requirements Management

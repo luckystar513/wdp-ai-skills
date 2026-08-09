@@ -1,6 +1,7 @@
 ---
 name: wdp-prd-zh
-description: 需求管理 backlog（基于 superpowers）。持续 brainstorm 积累需求卡片，按依赖/冲突算调度状态，确认后派发给后台子代理并行实现。
+description: Use when the user runs /wdp-prd-zh to discuss/record new requirements, view the backlog, or dispatch confirmed requirements to background subagents for parallel implementation. 中文版需求管理。子命令：new, list, update, confirm, dispatch, accept
+disable-model-invocation: true
 ---
 
 # wdp-prd-zh — 需求管理
