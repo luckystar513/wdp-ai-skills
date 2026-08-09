@@ -1,0 +1,46 @@
+{
+  "SessionStart": [
+    {
+      "matcher": "startup|resume",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/wdp-ctx/hooks/wdp-hook.sh\" load",
+          "timeout": 10
+        }
+      ]
+    },
+    {
+      "matcher": "clear",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/wdp-ctx/hooks/wdp-hook.sh\" load-after-clear",
+          "timeout": 10
+        }
+      ]
+    },
+    {
+      "matcher": "compact",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/wdp-ctx/hooks/wdp-hook.sh\" load-after-compact",
+          "timeout": 10
+        }
+      ]
+    }
+  ],
+  "PreCompact": [
+    {
+      "matcher": "manual|auto",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/wdp-ctx/hooks/wdp-hook.sh\" save-precompact",
+          "timeout": 10
+        }
+      ]
+    }
+  ]
+}

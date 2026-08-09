@@ -15,7 +15,7 @@
 
 ## wdp-ctx — 跨会话/跨 agent 项目上下文保留
 
-一条命令，把当前项目的工作状态固化成带时间戳的快照，让任何 coding agent 在重启、清空、压缩上下文后随时接续上次工作。**纯 Markdown 技能，无运行时代码。**
+一条命令，把当前项目的工作状态固化成带时间戳的快照，让任何 coding agent 在重启、清空、压缩上下文后随时接续上次工作。**纯 Markdown 技能，运行无需任何脚本**（附带的 hook 脚本仅用于"压缩/清空前自动提醒"，可选装）。
 
 ### 一条命令，七个子命令
 
@@ -71,26 +71,53 @@ cp -r skills/wdp-ctx skills/wdp-ctx-en ~/.claude/skills/
 
 所有子命令共用存储根（按 **项目 slug 分子目录**、文件名含时间戳，多项目互不混淆）：
 
-- 用户级安装：`~/.claude/skills/wdp-ctx/summaries/`
-- 项目级安装：`<项目>/.claude/skills/wdp-ctx/summaries/`
+- 项目级：`<项目>/.claude/wdp/summaries/`
+- 用户级：`~/.claude/wdp/summaries/`
 - 解析规则：项目级优先，用户级兜底。
+
+> **v1.1 变更**：存储根从技能安装目录（`.claude/skills/wdp-ctx/summaries/`）迁到项目自有 `.claude/wdp/`，**技能重装不再影响数据**。技能代码（`skills/`）与数据（`.claude/wdp/`）完全分离；快照为易变层默认 git 忽略，profile 档案默认提交（见下）。
+
+### 提交策略（git）
+
+- **profile.md 提交进 git**（稳定层，团队共享）。
+- **快照默认忽略**（易变层）；`.gitignore` 推荐写法：`.claude/wdp/*` + `!.claude/wdp/*/profile.md`。
+- profile frontmatter `git:` 字段记录选择：`ignore`（默认，快照忽略）/ `commit`（快照也提交）。
 
 ### 自动提醒（可选，hooks）
 
-技能内置"关键时刻主动建议"约定：agent 会在上下文压缩/清空、里程碑完成、会话结束前主动提醒你 `/wdp-ctx sum`。若要更硬的兜底，可挂会话级 hooks（非阻塞，仅当项目已有快照才提示）：
+技能内置"关键时刻主动建议"约定：agent 会在上下文压缩/清空、里程碑完成、会话结束前主动提醒你 `/wdp-ctx sum`。若要更硬的兜底，可挂会话级 hooks（**非阻塞、仅提示不自动执行，仅当项目已有快照才提示**）。四个提醒时机：
+
+| 事件 | 触发 | 提示内容 |
+|------|------|----------|
+| `load` | 会话启动/恢复（`startup\|resume`） | 提示 `/wdp-ctx init` 接续上次工作 |
+| `load-after-clear` | `/clear` 后新会话 | 提示 `/wdp-ctx init` 接续 |
+| `load-after-compact` | 上下文压缩后 | 提示 `/wdp-ctx init` 重新载入 |
+| `save-precompact` | 上下文压缩前（`manual\|auto`） | 建议先 `/wdp-ctx sum` 再压缩 |
+
+**能力边界**：`PreCompact` 只能提示、**不能阻断**压缩；`/clear` 为 CLI 内置命令、**无清空前钩子**，故采用"清空后新会话（load-after-clear）"兜底提醒。
+
+**插件安装（自动）**：以插件方式安装本仓库时，hooks 由 `.claude-plugin/plugin.json` 声明的 `hooks/hooks.json` **自动注册**，四组命令指向 `${CLAUDE_PLUGIN_ROOT}/skills/wdp-ctx/hooks/wdp-hook.sh`，无需手动配置。
+
+**纯技能安装（手动）**：把 `skills/wdp-ctx/hooks/wdp-hook.sh` 复制到 `~/.claude/skills/wdp-ctx/hooks/`，然后在 `~/.claude/settings.json`（或项目 `.claude/settings.local.json`）加：
 
 ```jsonc
-// .claude/settings.json 或 settings.local.json
 {
   "hooks": {
-    "SessionStart": [{ "hooks": [{ "type": "command", "command": "bash \"<路径>/wdp-hook.sh\" load" }] }],
-    "PreCompact":  [{ "matcher": "manual|auto", "hooks": [{ "type": "command", "command": "bash \"<路径>/wdp-hook.sh\" save-precompact" }] }],
-    "Stop":        [{ "hooks": [{ "type": "command", "command": "bash \"<路径>/wdp-hook.sh\" save" }] }]
+    "SessionStart": [
+      { "matcher": "startup|resume", "hooks": [{ "type": "command", "command": "bash \"$HOME/.claude/skills/wdp-ctx/hooks/wdp-hook.sh\" load", "timeout": 10 }] },
+      { "matcher": "clear",          "hooks": [{ "type": "command", "command": "bash \"$HOME/.claude/skills/wdp-ctx/hooks/wdp-hook.sh\" load-after-clear", "timeout": 10 }] },
+      { "matcher": "compact",        "hooks": [{ "type": "command", "command": "bash \"$HOME/.claude/skills/wdp-ctx/hooks/wdp-hook.sh\" load-after-compact", "timeout": 10 }] }
+    ],
+    "PreCompact": [
+      { "matcher": "manual|auto", "hooks": [{ "type": "command", "command": "bash \"$HOME/.claude/skills/wdp-ctx/hooks/wdp-hook.sh\" save-precompact", "timeout": 10 }] }
+    ]
   }
 }
 ```
 
-`wdp-hook.sh` 见 [skills/wdp-ctx/](skills/wdp-ctx/) 的 hooks 安装示例。
+> **Windows**：hooks 命令在 Git Bash 下执行，随 Git 安装自带 `bash`，无需额外配置。
+
+脚本本体见 [skills/wdp-ctx/hooks/wdp-hook.sh](skills/wdp-ctx/hooks/wdp-hook.sh)。
 
 ---
 
