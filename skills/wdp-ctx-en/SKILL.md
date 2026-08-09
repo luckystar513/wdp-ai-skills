@@ -374,11 +374,11 @@ The hook automates reminders: **reminds `sum` before compaction, reminds `init` 
 
 **Two install paths**:
 - **Plugin install (recommended)**: install `wdp-ai-skills` as a plugin (`/plugin`); `hooks/hooks.json` auto-registers, no manual config edits.
-- **Plain-skill install**: copy the script to `~/.claude/skills/wdp-ctx/hooks/wdp-hook.sh`, then add four entries to the `hooks` block of `~/.claude/settings.json`:
-  - `SessionStart` (matcher `startup|resume`) → `bash "$HOME/.claude/skills/wdp-ctx/hooks/wdp-hook.sh" load`
-  - `SessionStart` (matcher `clear`) → `bash "$HOME/.claude/skills/wdp-ctx/hooks/wdp-hook.sh" load-after-clear`
-  - `SessionStart` (matcher `compact`) → `bash "$HOME/.claude/skills/wdp-ctx/hooks/wdp-hook.sh" load-after-compact`
-  - `PreCompact` (matcher `manual|auto`) → `bash "$HOME/.claude/skills/wdp-ctx/hooks/wdp-hook.sh" save-precompact`
+- **Plain-skill install**: copy the script to `~/.claude/skills/wdp-ctx-en/hooks/wdp-hook.sh`, then add four entries to the `hooks` block of `~/.claude/settings.json`:
+  - `SessionStart` (matcher `startup|resume`) → `bash "$HOME/.claude/skills/wdp-ctx-en/hooks/wdp-hook.sh" load`
+  - `SessionStart` (matcher `clear`) → `bash "$HOME/.claude/skills/wdp-ctx-en/hooks/wdp-hook.sh" load-after-clear`
+  - `SessionStart` (matcher `compact`) → `bash "$HOME/.claude/skills/wdp-ctx-en/hooks/wdp-hook.sh" load-after-compact`
+  - `PreCompact` (matcher `manual|auto`) → `bash "$HOME/.claude/skills/wdp-ctx-en/hooks/wdp-hook.sh" save-precompact`
 
 **Behavior**: reminds only when the project has snapshots; silent otherwise. Reminders only suggest, never auto-execute.
 
@@ -403,3 +403,7 @@ The hook automates reminders: **reminds `sum` before compaction, reminds `init` 
 | Loading the whole profile + snapshot into the main context during init | read-heavy ops delegate to a sub-agent, receive only a digest; Read specific files on demand |
 | Two sums in the same second collide on the filename | check for existence on write and append a -N suffix, never overwrite |
 | Recording secrets, not just locations | No subcommand may write secret contents |
+
+## Version record
+
+Version history is maintained in this skill's own README (`README.md` in the same directory) → **Changelog**.
