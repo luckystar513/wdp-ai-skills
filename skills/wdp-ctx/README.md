@@ -104,6 +104,13 @@ cp -r skills/wdp-ctx ~/.claude/skills/
 
 ## 更新记录
 
+### v1.1.2 — 补录 v1.1.1 发布说明
+- 更新记录补上 v1.1.1（中英彻底独立）说明
+
+### v1.1.1 — 中英彻底独立
+- 英文版 wdp-ctx-en 自带英文 hook 脚本与英文 README/Changelog，两个技能各自独立发布、用户二选一安装
+- 本技能新增独立 README（含更新记录）；SKILL.md 尾部加「版本记录」ref 指向本 README
+
 ### v1.1.0 — 上下文卫生 + 自动提醒钩子 + 存储根迁移 + 接续增强
 - **上下文卫生**：init/verify/export/profile 默认派子 agent 代读，主上下文只收 digest；铁律新增规则 13、修订规则 8
 - **自动提醒钩子**：wdp-hook.sh 四事件（load/load-after-clear/load-after-compact/save-precompact），dev + 用户级 + 插件三重接线

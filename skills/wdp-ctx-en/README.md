@@ -104,6 +104,13 @@ The skill has a built-in "remind at key moments" convention: the agent proactive
 
 ## Changelog
 
+### v1.1.2 — Backfill the v1.1.1 release notes
+- Changelog now includes v1.1.1 (full bilingual independence)
+
+### v1.1.1 — Full bilingual independence
+- The English variant now ships its own English hook script and English README/Changelog; the two variants are published independently — users install either Chinese or English
+- This skill gained its own README (with changelog); SKILL.md gained a "Version record" ref pointing to it
+
 ### v1.1.0 — Context hygiene + automatic reminder hooks + storage-root migration + resume enhancements
 - **Context hygiene**: `init`/`verify`/`export`/`profile` delegate reading to a sub-agent by default; the main context receives only a digest. New ironclad Rule 13; Rule 8 revised.
 - **Automatic reminder hooks**: `wdp-hook.sh` with four events (load / load-after-clear / load-after-compact / save-precompact), wired in dev + user-level + plugin.
