@@ -14,6 +14,8 @@
 |------|------|------|------|
 | [wdp-ctx](skills/wdp-ctx/) | 中文 | 跨会话/跨 agent 项目上下文保留：sum/init/profile/verify/export/list/clear 七个子命令 | [README](skills/wdp-ctx/README.md) |
 | [wdp-ctx-en](skills/wdp-ctx-en/) | English | Same features — English variant | [README](skills/wdp-ctx-en/README.md) |
+| [wdp-prd-zh](skills/wdp-prd-zh/) | 中文 | 需求管理 backlog：持续 brainstorm 存需求卡片，按依赖/冲突算调度，确认后派后台子代理并行实现 | [SKILL.md](skills/wdp-prd-zh/SKILL.md) |
+| [wdp-prd-en](skills/wdp-prd-en/) | English | Requirements management — English variant | [SKILL.md](skills/wdp-prd-en/SKILL.md) |
 
 ## 安装（二选一）
 

@@ -1,6 +1,6 @@
 {
   "name": "wdp-ai-skills",
-  "description": "Coding Agent 技能集合仓库：跨会话/跨 agent 项目上下文保留，中英双版（/wdp-ctx 中文、/wdp-ctx-en English，共用存储：sum 快照、init 接续、profile 档案、verify 校验、export 导出 AGENTS.md、list 列出、clear 清空），后续持续收录更多技能",
+  "description": "Coding Agent 技能集合仓库：跨会话/跨 agent 项目上下文保留（/wdp-ctx 中文、/wdp-ctx-en English）与需求管理（/wdp-prd-zh 中文、/wdp-prd-en English），中英双版共用存储，后续持续收录更多技能",
   "author": {
     "name": "wdp"
   },
